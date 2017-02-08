@@ -1,0 +1,18 @@
+runtime: go
+api_version: go1
+
+handlers:
+# Serve API/CRUD calls from golang.
+- url: /api/.*
+  script: _go_app
+
+# Map root to index.html.
+- url: /
+  static_files: static/index.html
+  upload: static/index.html
+
+# Serve the whole site as though it's from the "static" dir.
+- url: /(.+)
+  static_files: static/\1
+  upload: static/.*
+
