@@ -9,12 +9,15 @@ app.controller("DogsCtrl", function($scope, $http) {
   // Initialization
   $http.get("/api/dogs")
       .then(function(data, status, headers, config) {
-        if (data.data) {
-          $scope.dogs = data.data.sort(function(a, b) {
+        if (data && data.data) {
+          data.data.sort(function(a, b) {
             return a.name > b.name;
           }).sort(function(a, b) {
             return a.adopted > b.adopted;
           });
+          for (var i = 0; i < data.data.length; i++) {
+            $scope.dogs.push(new Dog(data.data[i]));
+          }
           $scope.error = false;
         } else {
           $scope.error = true;

@@ -9,6 +9,7 @@
 
     <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
 		<script src="/assets/js/angular.min.js"></script>
+		<script src="/js/dog.js"></script>
 		<script src="/js/app.js"></script>
   </head>
   <body>
@@ -46,7 +47,14 @@
               <div class="form-group">
                 <label for="gender" class="col-sm-2 control-label">Gender</label>
                 <div class="col-sm-10">
-                  <input name="gender" class="form-control" type="text" placeholder="Fido" ng-model="dog.gender" />
+                  <label class="radio-inline">
+                    <input name="gender" class="form-check" type="radio" value="Male" ng-model="dog.gender" />
+                    Male
+                  </label>
+                  <label class="radio-inline">
+                    <input name="gender" class="form-check" type="radio" value="Female" ng-model="dog.gender" />
+                    Female
+                  </label>
                 </div>
               </div>
               <div class="form-group">
@@ -70,10 +78,46 @@
               <div class="form-group">
                 <label for="facebook_album_id" class="col-sm-2 control-label">Album ID</label>
                 <div class="col-sm-10">
+                <div class="input-group">
                   <input name="facebook_album_id" class="form-control" type="text" placeholder="1412337582144330" ng-model="dog.facebook_album_id"/>
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default" ng-click="dog.fetchImages();">Fetch Images</button>
+                  </span>
+                </div>
                 </div>
                 <small class="col-sm-offset-2 col-sm-10 form-text text-muted">The number after "&album_id=...." in the album URL</small>
               </div>
+
+              <div class="form-group">
+                <label class="col-sm-2 control-label">Images</label>
+                <div class="col-sm-10">
+                  <div class="row" ng-repeat="image in dog.images">
+                  <div class="col-sm-12">
+                    <div class="input-group">
+                      <input name="images" class="form-control" type="text" placeholder="https://facebook.com/image" ng-model="dog.images[$index]" />
+                      <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="dog.deleteImage($index);">
+                          <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-12">
+                    <div class="input-group">
+                      <input class="form-control" type="text" placeholder="https://facebook.com/image" ng-model="dog.nextImage" />
+                      <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="dog.addImage();">
+                          <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                        </button>
+                      </span>
+                    </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
 							<div class="form-group">
 								<div class="col-sm-offset-2 col-sm-10">
 									<div class="checkbox">
@@ -83,14 +127,15 @@
 									</div>
 								</div>
 							</div>
-              <button type="submit" class="btn btn-primary pull-right">Save</button>
+              <span class="pull-right">
+                <button type="submit" class="btn btn-primary">Save</button>
+              </span>
             </form>
           </div>
         </div> <!-- /col-md-7 -->
       </div> <!-- /row -->
     </div> <!-- /container -->
 
-    <!-- TODO: Fetch images for an album: GET 1412337582144330/photos?fields=images -->
 <!-- Add a dog modal dialog; move to bottom to keep out of flow -->
 <div class="modal fade" id="addDialog" tabindex="-1" role="dialog" aria-labelledby="addDialogLabel">
   <div class="modal-dialog" role="document">
@@ -110,7 +155,14 @@
 					<div class="form-group">
 						<label for="gender" class="col-sm-2 control-label">Gender</label>
 						<div class="col-sm-10">
-							<input name="gender" class="form-control" type="text" placeholder="Female" />
+              <label class="radio-inline">
+                <input name="gender" class="form-check" type="radio" value="Male" />
+                Male
+              </label>
+              <label class="radio-inline">
+                <input name="gender" class="form-check" type="radio" value="Female" />
+                Female
+              </label>
 						</div>
 					</div>
 					<div class="form-group">

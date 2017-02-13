@@ -3,12 +3,16 @@ package guestbook
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+  "log"
 	"net/http"
 	"strconv"
 
 	"appengine"
 	"appengine/datastore"
 	"appengine/user"
+  "appengine/urlfetch"
+
 )
 
 const (
@@ -31,11 +35,47 @@ type Dog struct {
 	Bio string `json:"bio"`
 	// FacebookAlbum is the URL of a Facebook Album containing pictures of this dog.
 	FacebookAlbumId string `json:"facebook_album_id"`
+  Images []string `json:"images"`
 	Adopted         bool   `json:"adopted"`
 }
 
 func init() {
+	http.HandleFunc("/api/albums", albumsHandler)
 	http.HandleFunc("/api/dogs", dogsHandler)
+}
+
+func albumsHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+  client := urlfetch.Client(c)
+  id := r.FormValue("id")
+  if len(id) == 0 {
+    http.Error(w, "ID is required.", http.StatusBadRequest)
+    return
+  }
+  access_token := "foo"
+  url := "https://graph.facebook.com/v2.8/" + id + "?fields=photos{images}&access_token=" + access_token
+  log.Printf("Attempting to fetch: %s", url)
+  resp, err := client.Get(url)
+  if err != nil {
+    log.Print("Failed to fetch.")
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+  if resp.StatusCode != http.StatusOK {
+    log.Print("Error fetching " + url)
+    http.Error(w, "Facebook returned status " + strconv.Itoa(resp.StatusCode), http.StatusBadRequest)
+    return
+  }
+  body, err := ioutil.ReadAll(resp.Body)
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+  _, err = w.Write(body)
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
 }
 
 func dogsHandler(w http.ResponseWriter, r *http.Request) {
@@ -76,6 +116,10 @@ func listDogs(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+  if len(dogs) == 0 {
+    fmt.Fprintf(w, "[]")
+    return
+  }
 	if len(keys) != len(dogs) {
 		http.Error(w, "Keys and dogs don't line up", http.StatusInternalServerError)
 	}
@@ -120,6 +164,14 @@ func addDog(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Album ID is required.", http.StatusBadRequest)
 		return
 	}
+  var images []string
+  images_str := r.FormValue("images")
+  if len(images_str) == 0 {
+    images = make([]string, 0);
+  } else {
+    r.ParseForm()
+    images = r.Form["images"]
+  }
 	adoptedstr := r.FormValue("adopted")
 	if len(adoptedstr) == 0 {
 		adoptedstr = "false"
@@ -139,6 +191,7 @@ func addDog(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 		Breed:           breed,
 		Bio:             bio,
 		FacebookAlbumId: facebook_album_id,
+    Images: images,
 		Adopted:         adopted,
 	}
 
